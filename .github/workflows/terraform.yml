@@ -1,0 +1,61 @@
+name: Terraform EC2 Test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_DEFAULT_REGION: us-east-1
+
+jobs:
+  provision-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: terraform init
+        run: terraform init
+
+      - name: terraform apply
+        run: terraform apply -auto-approve
+
+      - name: get public ip
+        id: ip
+        run: echo "public_ip=$(terraform output -raw public_ip)" >> "$GITHUB_OUTPUT"
+
+      - name: wait for instance to be ready
+        run: |
+          echo "waiting for instance to boot and start apache..."
+          for i in $(seq 1 30); do
+            if curl -s --max-time 5 http://${{ steps.ip.outputs.public_ip }} | grep -q "H2P"; then
+              echo "instance is ready"
+              exit 0
+            fi
+            echo "attempt $i/30 — retrying in 10s..."
+            sleep 10
+          done
+          echo "instance did not respond in time"
+          exit 1
+
+      - name: test web server
+        run: |
+          response=$(curl -s http://${{ steps.ip.outputs.public_ip }})
+          echo "response: $response"
+          if [ "$response" != "H2P" ]; then
+            echo "expected 'H2P', got '$response'"
+            exit 1
+          fi
+          echo "passed"
+
+      - name: terraform destroy
+        if: always()
+        run: terraform destroy -auto-approve
