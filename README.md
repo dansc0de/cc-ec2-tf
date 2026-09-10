@@ -96,6 +96,9 @@ aws iam put-user-policy \
           "ec2:CreateNetworkInterface",
           "ec2:DeleteNetworkInterface",
           "ec2:DescribeInstanceAttribute",
+          "ec2:DescribeInstanceTypes",
+          "ec2:DescribeInstanceCreditSpecifications",
+          "ec2:DescribeVolumes",
           "ec2:ModifyInstanceAttribute"
         ],
         "Resource": "*"
@@ -180,3 +183,7 @@ terraform destroy
 ```
 
 If `curl` returns `H2P`, your Terraform is working. Commit and push to `main` to run the grading workflow.
+
+## Helpful Links
+
+See [docs/helpful-links.md](docs/helpful-links.md) for Terraform, AWS, and course reference links.

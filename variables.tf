@@ -4,8 +4,4 @@ variable "region" {
   default     = "us-east-1"
 }
 
-variable "ami_id" {
-  description = "ubuntu 24.04 lts ami"
-  type        = string
-  default     = "ami-025d99823a4caad37"
-}
+# todo: add a variable for the ami id
